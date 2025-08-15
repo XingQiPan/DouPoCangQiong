@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ModTemplate.Code.Tool;
+using NeoModLoader.General;
+using System.Collections.ObjectModel;
+using System;
+using UnityEngine;
 
 namespace ModTemplate.Code
 {
@@ -13,46 +13,59 @@ namespace ModTemplate.Code
         private static readonly float[] _level_exp_required;
 
         private static readonly string[] _traits_blacklist =
-       {
-        "eyepatch", "crippled", "cursed", "tumorInfection", "mushSpores", "plague", "skin_burns"
+        {
+            "eyepatch", "crippled", "cursed", "tumorInfection", "mushSpores", "plague", "skin_burns"
         };
 
         private static readonly string[] _statuses_blacklist =
         {
-        "cough", "ash_fever"
+            "cough", "ash_fever"
         };
+
+        public static ReadOnlyCollection<BaseStats> LevelStats { get; }
+        public static ReadOnlyCollection<float> LevelExpRequired { get; }
 
         static Cultisys()
         {
             _level_stats = new BaseStats[MaxLevel + 1];
             _level_exp_required = new float[MaxLevel + 1];
-            for (var i = 0; i <= MaxLevel; i++) _level_stats[i] = new BaseStats();
+            for (var i = 0; i <= MaxLevel; i++)
+            {
+                _level_stats[i] = new BaseStats();
+            }
+
+            // 对应 斗之气, 斗者, 斗师, 大斗师, 斗灵, 斗王, 斗皇, 斗宗, 斗尊, 斗圣, 斗帝 的基础经验
+            int[] exp_realms = { 500, 1000, 2000, 4000, 9000, 4000, 4000, 25000, 9000, 9000, 10000 };
+
+            for (int i = 0; i < MaxLevel; i++)
+            {
+                int realm_index = i / 9; // 0-8级是第0个境界, 9-17是第1个, 以此类推
+                if (realm_index < exp_realms.Length)
+                {
+                    _level_exp_required[i] = exp_realms[realm_index];
+                    //Debug.Log(_level_exp_required[i]);
+                }
+            }
+            _level_exp_required[MaxLevel] = 0; // 满级经验为0
+
+            LevelExpRequired = new ReadOnlyCollection<float>(_level_exp_required);
+            LevelStats = new ReadOnlyCollection<BaseStats>(_level_stats);
 
             for (var i = 0; i < MaxLevel; i++)
             {
-                _level_exp_required[i] =
-                    i < 9 ? 25     // 境界1：等级0-8（9层）
-                    : i < 18 ? 67   // 境界2：等级9-17（9层）
-                    : i < 27 ? 180  // 境界3：等级18-26（9层）
-                    : i < 36 ? 474  // 境界4：等级27-35（9层）
-                    : i < 45 ? 1192 // 境界5：等级36-44（9层）
-                    : i < 54 ? 2689 // 境界6：等级45-53（9层）
-                    : i < 63 ? 5000 // 境界7：等级54-62（9层）
-                    : i < 72 ? 6792 // 境界8：等级63-71（9层）
-                    : i < 81 ? 8176 // 境界9：等级72-80（9层）
-                    : i < 90 ? 8808 // 境界10：等级81-89（9层）
-                    : 10000;        // 境界11：等级90-98（9层）
-            }
+                int current_level = i + 1;
+                BaseStats current_stats = _level_stats[i];
 
-            BaseStats stats = _level_stats[0];
-            for (var i = 0;i < MaxLevel; i++)
-            {
-                int level = i + 1;
-                stats = _level_stats[i];
-                stats[S.health] += LevelTool.GetLevelHealth(level);
-                stats[S.damage] += LevelTool.GetDamage(level);
-                stats[S.lifespan] += LevelTool.GetAge(level);
+                current_stats[S.health] += LevelTool.GetLevelHealth(current_level);
+                current_stats[S.damage] += LevelTool.GetDamage((int)current_stats[S.health]);
+                current_stats[S.lifespan] += LevelTool.GetAge(current_level);
             }
+        }
+
+        public static string GetName(int level)
+        {
+            level = Math.Min(MaxLevel, Math.Max(level, 0));
+            return LM.Get($"trait_Grade{level}");
         }
     }
 }

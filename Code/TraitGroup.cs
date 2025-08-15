@@ -8,7 +8,7 @@ namespace ModTemplate.Code
 {
     internal class TraitGroup
     {
-        public static void init()
+        public static void Init()
         {
             ActorTraitGroupAsset interesting1 = new ActorTraitGroupAsset();
             interesting1.id = "interesting1";

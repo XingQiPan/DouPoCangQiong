@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CHANGEME;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,12 +7,50 @@ using System.Threading.Tasks;
 
 namespace ModTemplate.Code
 {
-    internal class Stats
+    internal static class Stats
     {
+        public static BaseStatAsset talent;
+        public static BaseStatAsset cur_exp;
+        public static BaseStatAsset max_exp;
+        public static BaseStatAsset mod_talent;
 
-        public static void init()
+        public static void Init()
         {
-            
+            talent = new BaseStatAsset();
+            talent.id = "talent";
+            talent.normalize = true;
+            talent.normalize_min = -999999;
+            talent.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            talent.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(talent);
+
+            cur_exp = new BaseStatAsset();
+            cur_exp.id = "cur_exp";
+            cur_exp.normalize = true;
+            cur_exp.normalize_min = -999999;
+            cur_exp.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            cur_exp.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(cur_exp);
+
+            max_exp = new BaseStatAsset();
+            max_exp.id = "max_exp";
+            max_exp.normalize = true;
+            max_exp.normalize_min = -999999;
+            max_exp.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            talent.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(max_exp);
+
+            mod_talent = new BaseStatAsset();
+            mod_talent.id = "mod_talent";
+            mod_talent.normalize = true;
+            mod_talent.normalize_min = -999999;
+            mod_talent.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            mod_talent.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(mod_talent);
         }
     }
 }

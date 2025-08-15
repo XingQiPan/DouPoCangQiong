@@ -8,12 +8,13 @@ using ReflectionUtility;
 using ai;
 using System.Numerics;
 using UnityEngine;
+using ModTemplate.Code.Tool;
 
 namespace ModTemplate.Code.Trait
 {
     internal class LevelTrait
     {
-        public static void init()
+        public static void Init()
         {
             ActorTrait Grade0 = BaseTraitTool.CreateTrait("Grade0", "icon.png", "interesting1");
             AssetManager.traits.add(Grade0);
