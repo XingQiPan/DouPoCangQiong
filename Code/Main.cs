@@ -21,6 +21,7 @@ namespace CHANGEME
             Debug.Log("斗气属性加载成功……");
             LevelTrait.Init();
             FlairTrait.Init();
+            LevelSkillsTrait.Init();
             TraitGroup.Init();
             Debug.Log("斗气特质加载成功……");
             Harmony.CreateAndPatchAll(typeof(Patches));

@@ -79,9 +79,38 @@ namespace ModTemplate.Code.Tool
             actor.data.get(talent_key, out float talent, -1);
             if(talent > 0) return talent;
             if (actor.asset.is_boat) return 0;
-            int _talent = Randy.randomInt(0, 1000);
-            Debug.Log($"{actor.name}的天赋是:{_talent}");
-            actor.addTrait("trait_Flair_0");
+            //int _talent = Randy.randomInt(0, 1000);
+            int _talent = 0;
+            // 建议生成一个 0.0f 到 1.0f 之间的随机数，这样更容易计算
+            float num = Randy.randomFloat(0.0f, 1.0f);
+
+            // 天品: 0.001% 的概率
+            if (num < 0.00001f)
+            {
+                _talent = Randy.randomInt(701, 1000);
+            }
+            // 地品: 0.099% 的概率
+            else if (num < 0.00001f + 0.00099f) // 等同于 num < 0.001f
+            {
+                _talent = Randy.randomInt(401, 700);
+            }
+            // 玄品: 9.91% 的概率
+            else if (num < 0.001f + 0.0991f) // 等同于 num < 0.1001f
+            {
+                _talent = Randy.randomInt(101, 401);
+            }
+            // 黄品: 剩下 89.99% 的概率
+            else
+            {
+                _talent = Randy.randomInt(1, 100);
+            }
+            //actor.addTrait("trait_Flair_0");
+            //Debug.Log($"{actor.getName()}天赋：{_talent}");
+            if (_talent > 300)
+            {
+
+            }
+            SetTalent(actor,_talent);
             return _talent;
         }
     }

@@ -16,7 +16,7 @@ namespace ModTemplate.Code.Trait
     {
         public static void Init()
         {
-            ActorTrait Grade0 = BaseTraitTool.CreateTrait("Grade0", "icon.png", "interesting1");
+            ActorTrait Grade0 = BaseTraitTool.CreateTrait("Grade0", "././icon.png", "interesting1");
             AssetManager.traits.add(Grade0);
         }
 
