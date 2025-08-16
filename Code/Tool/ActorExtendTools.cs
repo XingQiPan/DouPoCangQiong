@@ -106,9 +106,9 @@ namespace ModTemplate.Code.Tool
             }
             //actor.addTrait("trait_Flair_0");
             //Debug.Log($"{actor.getName()}天赋：{_talent}");
-            if (_talent > 300)
+            if (_talent > 400)
             {
-
+                actor.data.favorite = true;
             }
             SetTalent(actor,_talent);
             return _talent;
