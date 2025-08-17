@@ -38,9 +38,9 @@ namespace ModTemplate.Code.Tool
             actor.data.set(exp_key, actor.GetExp() + value);
         }
         [Hotfixable]
-        public static void ResetExp(this Actor actor)
+        public static void ResetExp(this Actor actor,float exp)
         {
-            actor.data.set(exp_key, 0f);
+            actor.data.set(exp_key, actor.GetExp() - exp);
         }
 
         [Hotfixable]
@@ -106,7 +106,7 @@ namespace ModTemplate.Code.Tool
             }
             //actor.addTrait("trait_Flair_0");
             //Debug.Log($"{actor.getName()}天赋：{_talent}");
-            if (_talent > 400)
+            if (_talent >= 400)
             {
                 actor.data.favorite = true;
             }
