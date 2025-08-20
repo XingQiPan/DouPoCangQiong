@@ -1,4 +1,4 @@
-﻿using CHANGEME;
+﻿using DdouPoCangPong;
 using NeoModLoader.api.attributes;
 using System;
 using System.Collections.Generic;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace ModTemplate.Code.Tool
+namespace DdouPoCangPong.Code.Tool
 {
     public static class ActorExtendTools
     {
@@ -81,6 +81,7 @@ namespace ModTemplate.Code.Tool
             if (actor.asset.is_boat) return 0;
             //int _talent = Randy.randomInt(0, 1000);
             int _talent = 0;
+            //int _talent = 1000;
             // 建议生成一个 0.0f 到 1.0f 之间的随机数，这样更容易计算
             float num = Randy.randomFloat(0.0f, 1.0f);
 

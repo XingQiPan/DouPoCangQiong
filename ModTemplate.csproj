@@ -6,9 +6,12 @@
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <OutputType>Library</OutputType>
-        <RootNamespace>ModTemplate</RootNamespace>
+        <RootNamespace>DdouPoCangPong</RootNamespace>
         <DefineConstants>DEBUG;TRACE</DefineConstants>
     </PropertyGroup>
+    <ItemGroup>
+      <None Remove="Locales\icon.png" />
+    </ItemGroup>
 
     <ItemGroup>
         <Content Include=".github\ISSUE_TEMPLATE\bug-report-en.yaml" />
@@ -17,6 +20,7 @@
         <Content Include="icon.png" />
         <Content Include="Locales\cz.json" />
         <Content Include="Locales\en.json" />
+        <Content Include="Locales\icon.png" />
         <Content Include="mod.json" />
     </ItemGroup>
     <ItemGroup>

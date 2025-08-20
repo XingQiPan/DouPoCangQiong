@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ModTemplate.Code.Tool
+namespace DdouPoCangPong.Code.Tool
 {
     internal class LevelTool
     {

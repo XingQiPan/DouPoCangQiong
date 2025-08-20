@@ -1,10 +1,10 @@
-﻿using ModTemplate.Code.Tool;
+﻿using DdouPoCangPong.Code.Tool;
 using NeoModLoader.General;
 using System.Collections.ObjectModel;
 using System;
 using UnityEngine;
 
-namespace ModTemplate.Code
+namespace DdouPoCangPong.Code
 {
     internal class Cultisys
     {

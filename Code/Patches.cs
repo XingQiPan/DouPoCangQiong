@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
-using ModTemplate.Code;
-using ModTemplate.Code.Tool;
-using ModTemplate.Code.Trait;
+using DdouPoCangPong.Code;
+using DdouPoCangPong.Code.Tool;
 using NeoModLoader.api.attributes;
 using NeoModLoader.General.UI.Prefabs;
 using System;
@@ -13,12 +12,13 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace CHANGEME;
+namespace DdouPoCangPong;
 
 public class Patches
 {
     private static bool _initialized = false;
-
+    private static bool window_creature_info_initialized;
+    internal static bool window_favorites_global_mode;
 
     [Hotfixable]
     private static void addition_stats(Actor actor_base)
@@ -85,21 +85,13 @@ public class Patches
                 // 为了显示正确的突破后等级，应在LevelUp()之后再获取一次等级
                 int new_level = __instance.GetCultisysLevel();
 
-                // 显示突破成功的提示 (使用新等级)
-                if (new_level > 39) // 您可以调整这个等级限制
+                if (new_level > 59)
                 {
-                    WorldTip.instance.show($"{__instance.name}突破至{LevelTool.GetFormattedLevel(new_level)}!", false, "top", 1);
+                    WorldTip.instance.show($"{__instance.name}突破至{LevelTool.GetFormattedLevel(new_level + 1)}!", false, "top", 1);
                 }
 
-                // 更新 level 变量以供下一次循环使用
                 level = new_level;
-                if (level >= Cultisys.MaxLevel) break; // 如果已满级，则跳出循环
-
-                // 收藏逻辑
-                //if (level > 39 && !__instance.data.favorite)
-                //{
-                //    __instance.data.favorite = true;
-                //}
+                if (level >= Cultisys.MaxLevel) break;
             }
             else
             {
@@ -115,62 +107,24 @@ public class Patches
         }
     }
 
-    [Hotfixable]
-    [HarmonyPrefix, HarmonyPatch(typeof(UnitWindow), nameof(UnitWindow.OnEnable))]
-    private static void OnEnable_prefix(UnitWindow __instance)
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(UnitWindow), nameof(UnitWindow.OnEnable))]
+    private static void WindowCreatureInfo_OnEnable_postfix(UnitWindow __instance)
     {
-        if (!(__instance.actor?.isAlive() ?? false)) return;
-        SimpleButton button = UnityEngine.Object.Instantiate(SimpleButton.Prefab, __instance.transform.Find("Background"));
-        button.transform.localPosition = new Vector3(-250, 0);
-        button.transform.localScale = Vector3.one;
-        button.Setup(null, SpriteTextureLoader.getSprite("cultiway/icons/iconCultivation"));
-
-        Text info_text = null;
-        if (!_initialized)
+        if (__instance.actor == null || !__instance.actor.isAlive()) return;
+        if (!window_creature_info_initialized)
         {
-            _initialized = true;
-            var obj = new GameObject("TempInfo", typeof(Text), typeof(ContentSizeFitter));
-            obj.transform.SetParent(__instance.transform.Find("Background"));
-            obj.transform.localPosition = new(250, 0);
-            obj.transform.localScale = Vector3.one;
-            obj.GetComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            info_text = obj.GetComponent<Text>();
-            info_text.font = LocalizedTextManager.current_font;
-            info_text.resizeTextForBestFit = true;
-            info_text.resizeTextMinSize = 1;
-            info_text.resizeTextMaxSize = 8;
-        }
-        else
-        {
-            info_text = __instance.transform.Find("Background/TempInfo").GetComponent<Text>();
-        }
+            __instance.StartCoroutine(new WaitUntil(() =>
+            {
+                if (UnitWindowHelper.Initialize(__instance))
+                {
+                    window_creature_info_initialized = true;
+                }
 
-        var sb = new StringBuilder();
-        var actor_level = __instance.actor.GetCultisysLevel();
-        var actor_exp = __instance.actor.GetExp();
-        var actor_max_exp = Cultisys.LevelExpRequired[actor_level];
-        var actor_talent = __instance.actor.GetTalent();
-
-        sb.AppendLine($"{LevelTool.GetFormattedLevel(actor_level)} 经验:{actor_exp}/{actor_max_exp}");
-        sb.AppendLine($"天赋:{actor_talent}");
-
-        var stats_for_level = Cultisys.LevelStats[actor_level];
-        
-        if (stats_for_level[S.health] != 0)
-        {
-            sb.AppendLine($"  生命值: +{stats_for_level[S.health]}");
+                return window_creature_info_initialized;
+            }));
         }
-        if (stats_for_level[S.damage] != 0)
-        {
-            sb.AppendLine($"  伤害: +{stats_for_level[S.damage]}");
-        }
-        if (stats_for_level[S.lifespan] != 0)
-        {
-            // 寿命通常是直接设定而不是加成，所以不用"+"号
-            sb.AppendLine($"  寿命: {stats_for_level[S.lifespan]}");
-        }
-
-        info_text.text = sb.ToString();
     }
 
     [HarmonyPostfix]

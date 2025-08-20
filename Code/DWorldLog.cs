@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ModTemplate.Code
+namespace DdouPoCangPong.Code
 {
     internal class DWorldLog
     {

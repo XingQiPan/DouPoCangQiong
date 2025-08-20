@@ -1,11 +1,11 @@
-﻿using CHANGEME;
+﻿using DdouPoCangPong;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ModTemplate.Code
+namespace DdouPoCangPong.Code
 {
     internal static class Stats
     {
