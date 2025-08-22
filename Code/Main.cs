@@ -56,7 +56,7 @@ namespace DdouPoCangPong
             // 显示窗口
             ScrollWindow.showWindow(empty_window.screen_id);
             var tab = TabManager.CreateTab(asset_id_prefix, asset_id_prefix, "",
-                SpriteTextureLoader.getSprite("icon.png"));
+                SpriteTextureLoader.getSprite("doupo.png"));
             tab.SetLayout(new List<string>()
         {
             "tab"
@@ -66,7 +66,7 @@ namespace DdouPoCangPong
             tab.AddPowerButton("tab", PowerButtonCreator.CreateSimpleButton($"{asset_id_prefix}.allLevel", () =>
             {
                 ScrollWindow.showWindow($"{asset_id_prefix}.UI.{nameof(WindowCultiStats)}");
-            }, SpriteTextureLoader.getSprite("icon.png")));
+            }, SpriteTextureLoader.getSprite("doupo.png")));
 
             
 

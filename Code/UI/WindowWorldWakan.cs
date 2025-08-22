@@ -45,20 +45,16 @@ namespace DdouPoCangPong.Code.UI
             line.Setup(title, count.ToString());
         }
 
-        private int GetRealmIndex(int level)
+        public static int GetRealmIndex(int level)
         {
-            if (level < 0) return -1;
-            if (level <= 8) return 0;  // 斗之气
-            if (level <= 18) return 1; // 斗者
-            if (level <= 28) return 2; // 斗师
-            if (level <= 38) return 3; // 大斗师
-            if (level <= 48) return 4; // 斗灵
-            if (level <= 58) return 5; // 斗王
-            if (level <= 68) return 6; // 斗皇
-            if (level <= 78) return 7; // 斗宗
-            if (level <= 88) return 8; // 斗尊
-            if (level <= 98) return 9; // 斗圣
-            return 10; // 斗帝 (99)
+            if (level <= 0) return -1;
+
+            int realmIndex = (level - 1) / 9;
+
+            // 斗帝是最高境界，所有超过斗圣9星(90级)的都归为斗帝
+            if (realmIndex >= 10) return 10; // 斗帝索引为10
+
+            return realmIndex;
         }
 
         [Hotfixable]
@@ -101,6 +97,8 @@ namespace DdouPoCangPong.Code.UI
             {
                 AddLineValue(realm_names[i], counts[i]);
             }
+
+
 
             // 显示总人数
             AddLineValue("修炼者总数", counts.Sum());

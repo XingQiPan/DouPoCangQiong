@@ -28,12 +28,12 @@ namespace DdouPoCangPong.Code.Tool
             {
                 // 如果等级超过了斗帝九层，可以定义一个特殊显示
                 realmIndex = realms.Length - 1;
-                return $"境界:{realms[realmIndex]}巅峰";
+                return $"{realms[realmIndex]}巅峰";
             }
 
             string realmName = realms[realmIndex];
 
-            return $"境界:{realmName}{layer}星";
+            return $"{realmName}{layer}星";
         }
     }
 }

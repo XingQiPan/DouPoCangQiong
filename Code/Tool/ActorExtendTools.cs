@@ -16,6 +16,7 @@ namespace DdouPoCangPong.Code.Tool
         private const string exp_key = $"d_exp";
 
         private const string talent_key = $"d_talent";
+        private const string wu_xing_key = $"d_wu_xing_key";
 
         public static int GetCultisysLevel(this Actor actor)
         {
@@ -113,6 +114,21 @@ namespace DdouPoCangPong.Code.Tool
             }
             SetTalent(actor,_talent);
             return _talent;
+        }
+
+        public static int GetWuXing(this Actor actor)
+        {
+            actor.data.get(wu_xing_key, out int wuxing, -1);
+            if (wuxing > 0) return wuxing;
+            wuxing = Randy.randomInt(1,100);
+            actor.SetWuXing(wuxing);
+            return wuxing;
+        }
+
+        public static void SetWuXing(this Actor actor,int wuxing)
+        {
+            wuxing = Mathf.Max(wuxing, 0);
+            actor.data.set(wu_xing_key, wuxing);
         }
     }
 }
