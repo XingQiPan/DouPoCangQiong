@@ -1,5 +1,6 @@
 {
   "xingqipan.custommodt001": "斗破苍穹",
+  "xingqipan.custommodt001_StartBoard，MianBao_cz": "星棋盘，面包",
   "xingqipan.custommodt001.trait_group_interesting1": "境界",
   "xingqipan.custommodt001.trait_group_interesting2": "天赋",
   "xingqipan.custommodt001.trait_group_interesting3": "斗技",
@@ -34,5 +35,6 @@
   "xingqipan_custommodt001_all_level": "境界人数",
   "xingqipan_custommodt001_UI_WindowCultiStats": "境界人数",
   "xingqipan.custommodt001.UI.WindowCultiStats Title": "斗破修炼境界人数",
-  "xingqipan.custommodt001_StartBoard，MianBao_cz": "星棋盘，面包"
+  "xingqipan.custommodt001.minor_heal": "治疗术",
+  "xingqipan.custommodt001.skill": "斗技："
 }

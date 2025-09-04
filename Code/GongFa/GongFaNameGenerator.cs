@@ -53,7 +53,6 @@ namespace DdouPoCangPong.Code.GongFa
                     break; // 找到后就跳出循环
                 }
             }
-
             // 2. 根据新的Rank获取新的后缀
             string newSuffix;
             switch (newRank)
@@ -61,8 +60,8 @@ namespace DdouPoCangPong.Code.GongFa
                 case GongFaRank.黄阶: newSuffix = "诀"; break;
                 case GongFaRank.玄阶: newSuffix = "法"; break;
                 case GongFaRank.地阶: newSuffix = "典"; break;
-                case GongFaRank.天阶: newSuffix = "经"; break;
-                case GongFaRank.超阶: newSuffix = "道"; break;
+                case GongFaRank.天阶: newSuffix = emperors.GetRandom()+"经"; break;
+                case GongFaRank.超阶: newSuffix = concepts.GetRandom()+"道"; break;
                 default: return currentName; // 如果出现意外情况，返回原名
             }
 

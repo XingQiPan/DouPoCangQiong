@@ -11,6 +11,7 @@ using System.Reflection;
 using UnityEngine;
 using UnityEngine.UI;
 using DdouPoCangPong.Code.UI;
+using DdouPoCangPong.Code.Skills;
 
 namespace DdouPoCangPong
 {
@@ -25,6 +26,11 @@ namespace DdouPoCangPong
             //TraitGroup.Init();
             Debug.Log("斗气特质加载成功……");
             new Tooltips().Init();
+
+            SkillsLibrary.init();
+            Debug.Log("斗技加载成功……");
+            ModEffectsLibrary.init();
+            Debug.Log("斗技特效加载成功……");
             try
             {
                 Harmony.CreateAndPatchAll(typeof(Patches));
@@ -34,6 +40,8 @@ namespace DdouPoCangPong
             {
                 Debug.Log("斗气机制加载失败："+e);
             }
+
+
 
             // 创建空白窗口
             ScrollWindow empty_window = WindowCreator.CreateEmptyWindow("xingqipan.custommodt001", "xingqipan.custommodt001");

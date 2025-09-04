@@ -13,6 +13,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using DdouPoCangPong.Code.GongFa;
 using static DdouPoCangPong.Code.GongFa.GongFa;
+using DdouPoCangPong.Code.Skills;
 
 namespace DdouPoCangPong;
 
@@ -52,6 +53,10 @@ public class Patches
         return list;
     }
 
+    /// <summary>
+    /// 每年的逻辑
+    /// </summary>
+    /// <param name="__instance"></param>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Actor), nameof(Actor.updateAge))]
     public static void Actor_updateAge_postfix(Actor __instance)
@@ -74,6 +79,9 @@ public class Patches
         var mod_talent = __instance.GetModTalent() + __instance.GetGongFaData().cultivation_speed_mod;
         var wu_xing = __instance.GetWuXing();
         var gongfa = __instance.GetGongFaData();
+
+        //获取法术实例
+        var skillComp = ActorSkillManager.GetComponent(__instance);
 
         if (mod_talent > 0)
             __instance.IncExp(50 + talent * 0.01f * 50 + mod_talent * 50);
@@ -133,6 +141,11 @@ public class Patches
             }
         }
 
+        //获得法术
+        if (skillComp != null && skillComp.known_spells.Count <= 0)
+        {
+            skillComp.LearnSpell("minor_heal");
+        }
 
 
 
@@ -173,7 +186,11 @@ public class Patches
         sb.AppendLine($"功法进度：{__instance.actor.GetGongFaData().exp}/{__instance.actor.GetGongFaData().max_exp}");
         sb.AppendLine($"推演进度：{__instance.actor.GetGongFaData().deduction_progress * 100:F1}% / {__instance.actor.GetGongFaData().max_deduction * 100:F1}%");
         sb.AppendLine($"修炼速度加成：{__instance.actor.GetGongFaData().cultivation_speed_mod * 100:F1}%");
-
+        sb.AppendLine($"{Main.asset_id_prefix}.skill".Localize());
+        foreach (var item in ActorSkillManager.GetComponent(__instance.actor).known_spells)
+        {
+            sb.AppendLine($"{Main.asset_id_prefix}.{item.id}".Localize());
+        }
         info_text.text = sb.ToString();
     }
 
@@ -197,6 +214,12 @@ public class Patches
         }
     }
 
+    /// <summary>
+    /// 攻击
+    /// </summary>
+    /// <param name="__instance"></param>
+    /// <param name="pDamage"></param>
+    /// <param name="pAttacker"></param>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Actor), nameof(Actor.getHit))]
     private static void Actor_getHit_postfix(Actor __instance, ref float pDamage, BaseSimObject pAttacker = null)
@@ -224,21 +247,52 @@ public class Patches
             }
         }
 
-        // 获取防御方和攻击方的等级
+        #region 法术部分
+        var knownSpells = __instance.GetKnownSpells();
+
+        if (knownSpells.Count > 0)
+        {
+            var availableSpells = new List<(SkillAsset spell, Actor target)>();
+            var skillComp = ActorSkillManager.GetComponent(__instance);
+
+            foreach (var spell in knownSpells)
+            {
+                // 检查技能自带的使用条件
+                if (spell.condition != null && spell.condition(__instance, out Actor potentialTarget))
+                {
+                    // 再检查蓝量和冷却
+                    if (skillComp.CanCastSpell(spell, potentialTarget))
+                    {
+                        availableSpells.Add((spell, potentialTarget));
+                    }
+                }
+            }
+
+            // 如果有可用的技能, 随机选择一个并施放
+            if (availableSpells.Count > 0)
+            {
+                // 从可用技能中随机选择一个
+                var (spellToCast, target) = availableSpells[Randy.randomInt(0, availableSpells.Count)];
+
+                // 使用工具类来尝试施法，代码更简洁、意图更明确
+                __instance.TryCastSpell(spellToCast.id, target);
+            }
+        }
+        #endregion
+
         int defenderLevel = __instance.GetCultisysLevel();
         Actor attack = (Actor)pAttacker;
         int attackerLevel = attack.GetCultisysLevel();
 
         if (defenderLevel > 90 && attackerLevel <= 90)
         {
-            // 将伤害减少90% (即只承受10%的伤害)
             pDamage *= 0.1f;
             pDamage = Mathf.Max(1f, pDamage);
         }
     }
 
     /// <summary>
-    /// 防击退 (最终修正版)
+    /// 防击退
     /// </summary>
     [HarmonyPrefix]
     [HarmonyPatch(typeof(Actor), nameof(Actor.addForce), new Type[] { typeof(float), typeof(float), typeof(float), typeof(bool) })]
@@ -252,7 +306,7 @@ public class Patches
     }
 
     /// <summary>
-    /// 防眩晕 (最终修正版)
+    /// 防眩晕
     /// </summary>
     [HarmonyPrefix]
     [HarmonyPatch(typeof(Actor))]
@@ -267,14 +321,20 @@ public class Patches
     }
 
     /// <summary>
-    /// 在创建新生物时触发，使其自动继承或创建功法。
+    /// 在创建新生物时触发，使其自动继承或创建功法.生成法术权限。
     /// </summary>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Actor), nameof(Actor.newCreature))]
     public static void Actor_newCreature_Postfix(Actor __instance)
     {
-        // 调用GetGongFaData会触发我们的创建/继承逻辑
         __instance.GetGongFaData();
+        ActorSkillManager.AddComponent(__instance);
     }
 
+    [HarmonyPatch(typeof(MapBox), nameof(MapBox.Update))]
+    [HarmonyPostfix]
+    public static void World_update_Postfix()
+    {
+        ActorSkillManager.Update(Time.deltaTime);
+    }
 }
