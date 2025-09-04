@@ -11,6 +11,7 @@ namespace DdouPoCangPong.Code
         public const int MaxLevel = 99;
         private static readonly BaseStats[] _level_stats;
         private static readonly float[] _level_exp_required;
+        private static readonly float[] _dou_qi_required;
         private static readonly float[] _minor_star_breakthrough_chance;
         private static readonly float[] _major_realm_breakthrough_chance;
 
@@ -26,6 +27,7 @@ namespace DdouPoCangPong.Code
 
         public static ReadOnlyCollection<BaseStats> LevelStats { get; }
         public static ReadOnlyCollection<float> LevelExpRequired { get; }
+        public static ReadOnlyCollection<float> LevelDouQiRequired { get; }
         public static ReadOnlyCollection<float> MinorStarBreakthroughChance { get; }
         public static ReadOnlyCollection<float> MajorRealmBreakthroughChance { get; }
 
@@ -33,6 +35,8 @@ namespace DdouPoCangPong.Code
         {
             _level_stats = new BaseStats[MaxLevel + 1];
             _level_exp_required = new float[MaxLevel + 1];
+            _dou_qi_required = new float[MaxLevel + 1];
+
             for (var i = 0; i <= MaxLevel; i++)
             {
                 _level_stats[i] = new BaseStats();
@@ -41,6 +45,7 @@ namespace DdouPoCangPong.Code
             int[] health_realms = { 20, 105, 443, 1642, 4567, 11699, 27327, 58532, 134209, 301907, 614211 };
             int[] lifespan_realms = { 100, 100, 120, 160, 220, 300, 400, 550, 800, 2000, 10000 };
             float[] exp_realms = { 25, 67, 180, 474, 1192, 2689, 5000, 6792, 8176, 8808, 10000 };
+            float[] dou_qi_realms = { 25, 67, 180, 474, 1192, 2689, 5000, 6792, 8176, 8808, 10000 };
 
             // 定义概率数据
             float[] minor_chances = { 1.0f, 1.0f, 1.0f, 0.95f, 0.90f, 0.80f, 0.75f, 0.70f, 0.60f, 0.50f, 0.25f };
@@ -64,7 +69,6 @@ namespace DdouPoCangPong.Code
 
                 current_stats[S.health] = (int)(prev_health + health_step * star_level);
                 current_stats[S.lifespan] = (int)(prev_lifespan + lifespan_step * star_level);
-
                 current_stats[S.damage] = (int)(current_stats[S.health] * 0.04f);
             }
 
@@ -74,6 +78,7 @@ namespace DdouPoCangPong.Code
                 if (realm_index < exp_realms.Length)
                 {
                     _level_exp_required[i] = exp_realms[realm_index];
+                    _dou_qi_required[i] = dou_qi_realms[realm_index];
                 }
             }
             _level_exp_required[MaxLevel] = 0;
@@ -88,6 +93,7 @@ namespace DdouPoCangPong.Code
             }
 
             LevelExpRequired = new ReadOnlyCollection<float>(_level_exp_required);
+            LevelDouQiRequired = new ReadOnlyCollection<float>(_dou_qi_required);
             LevelStats = new ReadOnlyCollection<BaseStats>(_level_stats);
             MinorStarBreakthroughChance = new ReadOnlyCollection<float>(_minor_star_breakthrough_chance);
             MajorRealmBreakthroughChance = new ReadOnlyCollection<float>(_major_realm_breakthrough_chance);

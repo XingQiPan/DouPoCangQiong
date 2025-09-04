@@ -29,7 +29,7 @@ namespace DdouPoCangPong.Code.Skills
 
         /// <summary>
         /// 条件：当存在一个有效的敌对攻击目标时，选择该目标。
-        /// 用于 "火焰飞镖".
+        /// 用于 "斗气爆发".
         /// </summary>
         public static bool HasValidEnemyTarget(Actor pCaster, out Actor pTarget)
         {

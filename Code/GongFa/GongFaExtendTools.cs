@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using static DdouPoCangPong.Code.GongFa.GongFa;
+using DdouPoCangPong.Code.Skills; // 引入技能命名空间
 
 namespace DdouPoCangPong.Code.GongFa
 {
@@ -44,6 +44,25 @@ namespace DdouPoCangPong.Code.GongFa
 
                 if (bestFamilyGongFa != null)
                 {
+                    // 新增：功法继承限制
+                    // 如果家族最强功法是超阶，后代最多获得一个同源的天阶功法
+                    if (bestFamilyGongFa.rank == GongFaRank.超阶)
+                    {
+                        var downgradedGongFa = bestFamilyGongFa.Clone();
+                        downgradedGongFa.rank = GongFaRank.天阶;
+                        downgradedGongFa.grade = 9; // 从天阶九品开始
+                        // 重置修炼和推演进度，但保留其强大的血统（ID不变）
+                        downgradedGongFa.ceng = 0;
+                        downgradedGongFa.exp = 0;
+                        downgradedGongFa.max_exp = 100;
+                        downgradedGongFa.deduction_progress = 0;
+                        // 可以给予一个比普通功法略高的初始修炼速度
+                        downgradedGongFa.cultivation_speed_mod = 1.2f;
+                        downgradedGongFa.granted_skill_ids.Clear();
+                        UpdateMaxDeduction(downgradedGongFa); // 设置为天阶九品正确的推演值
+                        return downgradedGongFa;
+                    }
+
                     // 继承家族最强功法（的副本）
                     return bestFamilyGongFa.Clone();
                 }
@@ -73,6 +92,40 @@ namespace DdouPoCangPong.Code.GongFa
         }
 
         /// <summary>
+        /// 新增：检查是否满足功法推演的境界要求
+        /// </summary>
+        private static bool CanDeductGongFa(GongFaData gongFa, int actorLevel)
+        {
+            // 境界等级映射: 0-8 斗之气, 9-17 斗者, 18-26 斗师, 27-35 大斗师, 36-44 斗灵, 45-53 斗王,
+            // 54-62 斗皇, 63-71 斗宗, 72-80 斗尊, 81-89 斗圣, 90-98 斗帝
+            int realmLevel = actorLevel / 9;
+
+            switch (gongFa.rank)
+            {
+                case GongFaRank.黄阶:
+                    if (gongFa.grade >= 3) return realmLevel >= 3; // 大斗师
+                    if (gongFa.grade < 3) return realmLevel >= 4;  // 斗灵
+                    break;
+                case GongFaRank.玄阶:
+                    if (gongFa.grade >= 5) return realmLevel >= 4; // 斗灵
+                    if (gongFa.grade < 5) return realmLevel >= 5;  // 斗王
+                    break;
+                case GongFaRank.地阶:
+                    if (gongFa.grade >= 7) return realmLevel >= 6; // 斗皇
+                    if (gongFa.grade == 6 || gongFa.grade == 5) return realmLevel >= 7; // 斗宗
+                    if (gongFa.grade == 4 || gongFa.grade == 3) return realmLevel >= 8; // 斗尊
+                    if (gongFa.grade < 3) return realmLevel >= 9;  // 斗圣
+                    break;
+                case GongFaRank.天阶:
+                    if (gongFa.grade >= 7) return realmLevel >= 9;  // 斗圣
+                    if (gongFa.grade < 7) return realmLevel >= 10; // 斗帝
+                    break;
+            }
+            return true; // 超阶或未匹配到的情况默认允许
+        }
+
+
+        /// <summary>
         /// 每年结算一次：处理功法推演
         /// </summary>
         public static void UpdateGongFaDeduction(this Actor actor)
@@ -87,18 +140,22 @@ namespace DdouPoCangPong.Code.GongFa
             // 必须是10层圆满才能推演
             if (gongFa.ceng < gongFa.maxceng) return;
 
-            // 如果已经是顶级功法，则无法再推演
-            if (gongFa.rank == GongFaRank.超阶 && gongFa.grade == 1) return;
+            // 检查推演者的境界是否满足要求
+            if (!CanDeductGongFa(gongFa, actor.GetCultisysLevel())) return;
 
             // -- 计算本年度获得的推演值 --
             // 自身贡献：推演值 = 悟性*1.5 + 等级*1.8
             float progressThisYear = actor.GetWuXing() * 1.5f + actor.data.level * 1.8f;
 
-            // 家族成员助力：每人每年提供 等级/2 的推演值
-            foreach (var member in actor.family.units)
+            // 新增：超阶功法只能由自己推演，不能获得家族助力
+            if (gongFa.rank != GongFaRank.超阶)
             {
-                if (member == null || !member.isAlive() || member == actor) continue;
-                progressThisYear += member.data.level / 2.0f;
+                // 家族成员助力：每人每年提供 等级/2 的推演值
+                foreach (var member in actor.family.units)
+                {
+                    if (member == null || !member.isAlive() || member == actor) continue;
+                    progressThisYear += member.data.level / 2.0f;
+                }
             }
 
             gongFa.deduction_progress += progressThisYear;
@@ -127,12 +184,7 @@ namespace DdouPoCangPong.Code.GongFa
                 {
                     gongFa.rank++;
                     gongFa.grade = 9;
-
-                    // !! 主要修改点 !!
-                    // 调用新的方法来只更新后缀，而不是完全重命名
                     gongFa.name = GongFaNameGenerator.UpgradeGongFaName(gongFa.name, gongFa.rank);
-
-                    // 破阶提高修炼速度
                     switch (gongFa.rank)
                     {
                         case GongFaRank.玄阶: gongFa.cultivation_speed_mod += 0.10f; break;
@@ -143,13 +195,17 @@ namespace DdouPoCangPong.Code.GongFa
                 }
                 else
                 {
-                    // 已经是最高阶，品级卡在1品
-                    gongFa.grade = 1;
+                    // 新增：超阶功法达到1品后可以无限推演
+                    gongFa.grade = 1; // 品级保持在1品
+                    // 每次推演成功，都永久提升修炼速度
+                    gongFa.cultivation_speed_mod += Randy.randomFloat(0.2f, 0.3f);
+                    // 大幅增加下一次推演的难度
+                    gongFa.max_deduction = (int)(gongFa.max_deduction * 1.5f);
+                    return; // 直接返回，跳过后续的常规更新
                 }
             }
             else // 品级提升
             {
-                // 每升级一品，修炼速度提高
                 switch (gongFa.rank)
                 {
                     case GongFaRank.黄阶: gongFa.cultivation_speed_mod += Randy.randomFloat(0.01f, 0.07f); break;
@@ -174,19 +230,19 @@ namespace DdouPoCangPong.Code.GongFa
             switch (gongFa.rank)
             {
                 case GongFaRank.黄阶:
-                    gongFa.max_deduction = gongFa.grade == 1 ? 1500 : 250 + gradeFromTop * 75;
+                    gongFa.max_deduction = gongFa.grade == 1 ? 1500 * 2 : 250 + gradeFromTop * 75 * 3;
                     break;
                 case GongFaRank.玄阶:
-                    gongFa.max_deduction = gongFa.grade == 1 ? 7000 : 800 + gradeFromTop * 375;
+                    gongFa.max_deduction = gongFa.grade == 1 ? 7000 * 2 : 800 + gradeFromTop * 375 * 3;
                     break;
                 case GongFaRank.地阶:
-                    gongFa.max_deduction = gongFa.grade == 1 ? 12000 : 2000 + gradeFromTop * 800;
+                    gongFa.max_deduction = gongFa.grade == 1 ? 12000 * 2 : 2000 + gradeFromTop * 800 * 3;
                     break;
                 case GongFaRank.天阶:
-                    gongFa.max_deduction = gongFa.grade == 1 ? 15000 : 4000 + gradeFromTop * 1300;
+                    gongFa.max_deduction = gongFa.grade == 1 ? 15000 * 2 : 4000 + gradeFromTop * 1300 * 3;
                     break;
                 case GongFaRank.超阶:
-                    gongFa.max_deduction = 5000 + gradeFromTop * 1500;
+                    gongFa.max_deduction = 5000 + gradeFromTop * 1500 * 3;
                     break;
             }
         }
@@ -200,7 +256,8 @@ namespace DdouPoCangPong.Code.GongFa
             foreach (var member in family.units)
             {
                 if (member == null || !member.isAlive()) continue;
-                var memberGongFa = member.GetGongFaData();
+                var memberGongFa = member.GetGongFaDataInternal();
+                if (memberGongFa == null) continue;
 
                 // 只更新同源的功法
                 if (memberGongFa.id == newGongFaTemplate.id)
@@ -222,20 +279,45 @@ namespace DdouPoCangPong.Code.GongFa
 
             if (gongFa.ceng >= gongFa.maxceng) return false;
 
-            // 应用修炼速度加成
             gongFa.exp += (int)(expToAdd * gongFa.cultivation_speed_mod);
 
             while (gongFa.exp >= gongFa.max_exp && gongFa.ceng < gongFa.maxceng)
             {
+                int nextLevel = gongFa.ceng + 1;
+                bool isBreakthroughLevel = (nextLevel % 2 == 0);
+
+                if (isBreakthroughLevel)
+                {
+                    if (Randy.randomFloat(0,1) > gongFa.GetBreakthroughChance())
+                    {
+                        gongFa.exp = 0;
+                        break;
+                    }
+                }
+
                 leveledUp = true;
                 gongFa.exp -= gongFa.max_exp;
                 gongFa.ceng++;
-                // 新的最大经验值计算公式：结合悟性和当前等级，使增长更合理
-                // 基础增长率1.03加上基于悟性的调整值，再加上等级带来的微小影响
-                float growthFactor = 1.03f + (actor.GetCultisysLevel() * 0.0005f);
-                // 确保增长率不会过低或过高
-                growthFactor = Mathf.Clamp(growthFactor, 1.02f, 1.2f);
 
+                if (isBreakthroughLevel)
+                {
+                    if (gongFa.granted_skill_ids.Count < gongFa.GetMaxSkillsCapacity())
+                    {
+                        var availableSkills = new List<string> { "minor_heal", "fire_dart" };
+                        var skillToLearn = availableSkills.GetRandom();
+
+                        if (!actor.HasSpell(skillToLearn))
+                        {
+                            // !! 主要修改点 !!
+                            // 在学习技能时，传入当前功法的阶级作为技能的品质
+                            actor.LearnSpell(skillToLearn, gongFa.rank);
+                            gongFa.granted_skill_ids.Add(skillToLearn);
+                        }
+                    }
+                }
+
+                float growthFactor = 1.03f + (actor.GetCultisysLevel() * 0.0005f);
+                growthFactor = Mathf.Clamp(growthFactor, 1.02f, 1.2f);
                 gongFa.max_exp = (int)(gongFa.max_exp * growthFactor);
             }
             return leveledUp;

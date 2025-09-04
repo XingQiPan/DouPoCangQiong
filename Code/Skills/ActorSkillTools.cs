@@ -26,11 +26,10 @@ namespace DdouPoCangPong.Code.Tool
         /// </summary>
         /// <param name="actor">目标 Actor</param>
         /// <returns>一个 SkillAsset 列表. 如果角色没有技能组件，则返回一个空列表.</returns>
-        public static List<SkillAsset> GetKnownSpells(this Actor actor)
+        public static List<LearnedSkill> GetKnownSpells(this Actor actor)
         {
             var component = actor.GetSkillComponent();
-            // 如果组件不存在，返回一个空的列表以避免空引用异常
-            return component?.known_spells ?? new List<SkillAsset>();
+            return component?.known_spells ?? new List<LearnedSkill>();
         }
 
         /// <summary>
@@ -49,14 +48,14 @@ namespace DdouPoCangPong.Code.Tool
         }
 
         /// <summary>
-        /// 让一个 Actor 学习一个新技能.
+        /// 学习技
         /// </summary>
-        /// <param name="actor">目标 Actor</param>
-        /// <param name="pSpellID">要学习的技能的唯一ID</param>
-        public static void LearnSpell(this Actor actor, string pSpellID)
+        /// <param name="actor"></param>
+        /// <param name="pSpellID">法术id</param>
+        /// <param name="quality">需要提供品质</param>
+        public static void LearnSpell(this Actor actor, string pSpellID, GongFa.GongFa.GongFaRank quality)
         {
-            // 使用 ?. 操作符安全地调用方法，如果组件为null则不执行任何操作
-            actor.GetSkillComponent()?.LearnSpell(pSpellID);
+            actor.GetSkillComponent()?.LearnSpell(pSpellID, quality);
         }
 
         /// <summary>
@@ -92,30 +91,17 @@ namespace DdouPoCangPong.Code.Tool
             return actor.GetSkillComponent()?.GetCooldownRemaining(pSpellID) ?? 0f;
         }
 
-        /// <summary>
-        /// 尝试为一个 Actor 施放一个技能.
-        /// 该方法会检查所有施法条件 (冷却, 法力等).
-        /// </summary>
-        /// <param name="actor">施法者</param>
-        /// <param name="pSpellID">技能的唯一ID</param>
-        /// <param name="pTarget">技能目标</param>
-        /// <returns>如果施法成功则返回 true, 否则返回 false.</returns>
         public static bool TryCastSpell(this Actor actor, string pSpellID, Actor pTarget)
         {
             var component = actor.GetSkillComponent();
             if (component == null) return false;
 
-            var spellAsset = SkillsLibrary.get(pSpellID);
-            if (spellAsset == null) return false;
+            // 首先根据ID找到已学习的技能实例
+            var learnedSkill = component.known_spells.FirstOrDefault(s => s.id == pSpellID);
+            if (learnedSkill == null) return false;
 
             // 复用组件内已有的逻辑
-            if (component.CanCastSpell(spellAsset, pTarget))
-            {
-                component.CastSpell(spellAsset, pTarget);
-                return true;
-            }
-
-            return false;
+            return  component.CastSpell(learnedSkill, pTarget);
         }
     }
 }

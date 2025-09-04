@@ -14,6 +14,8 @@ namespace DdouPoCangPong.Code
         public static BaseStatAsset max_exp;
         public static BaseStatAsset mod_talent;
         public static BaseStatAsset wu_xing;
+        public static BaseStatAsset dou_qi;
+        public static BaseStatAsset max_dou_qi;
 
         public static void Init()
         {
@@ -61,6 +63,24 @@ namespace DdouPoCangPong.Code
             //Warrior.multiplier = true;
             wu_xing.used_only_for_civs = false;
             AssetManager.base_stats_library.add(wu_xing);
+
+            dou_qi = new BaseStatAsset();
+            dou_qi.id = "dou_qi";
+            dou_qi.normalize = true;
+            dou_qi.normalize_min = -999999;
+            dou_qi.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            dou_qi.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(dou_qi);
+
+            max_dou_qi = new BaseStatAsset();
+            max_dou_qi.id = "max_dou_qi";
+            max_dou_qi.normalize = true;
+            max_dou_qi.normalize_min = -999999;
+            max_dou_qi.normalize_max = 999999;
+            //Warrior.multiplier = true;
+            max_dou_qi.used_only_for_civs = false;
+            AssetManager.base_stats_library.add(max_dou_qi);
         }
     }
 }

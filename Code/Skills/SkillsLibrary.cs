@@ -24,10 +24,10 @@ namespace DdouPoCangPong.Code.Skills
                 condition = SkillConditionsLibrary.SelfHealWhenHealthLow
             });
 
-            // 注册 “火焰飞镖”
+            // 注册 “斗气释放”
             registerSpell(new SkillAsset
             {
-                id = "my_mod_fire_dart",
+                id = "fire_dart",
                 name = "Fire Dart",
                 description = "Shoots a small fire dart at an enemy.",
                 mana_cost = 15,

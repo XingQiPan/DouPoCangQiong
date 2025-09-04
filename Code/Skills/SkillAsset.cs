@@ -14,11 +14,30 @@ namespace DdouPoCangPong.Code.Skills
     // 返回 true 表示可以使用，false 表示不满足条件
     public delegate bool SpellCondition(Actor pCaster, out Actor pTarget);
 
+    /// <summary>
+    /// 新增：斗技类型枚举
+    /// </summary>
+    public enum SkillType
+    {
+        Sword,      // 剑系
+        FistPalm,   // 拳掌系
+        Saber,      // 刀系
+        Fire,       // 火系
+        Water,      // 水系
+        Wood,       // 木系
+        Earth,      // 土系
+        Metal,      // 金系
+        Space       // 空间系
+    }
+
     public class SkillAsset
     {
         public string id;
         public string name;
         public string description;
+
+        // 新增：斗技类型
+        public SkillType type;
 
         //消耗蓝量
         public int mana_cost = 10;
@@ -32,9 +51,5 @@ namespace DdouPoCangPong.Code.Skills
 
         public SpellCondition condition;
 
-        // 以后可以扩展更多属性:
-        // public float cast_range;
-        // public string required_trait;
-        // public string effect_id; 
     }
 }

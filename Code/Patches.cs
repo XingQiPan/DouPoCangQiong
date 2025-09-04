@@ -79,6 +79,9 @@ public class Patches
         var mod_talent = __instance.GetModTalent() + __instance.GetGongFaData().cultivation_speed_mod;
         var wu_xing = __instance.GetWuXing();
         var gongfa = __instance.GetGongFaData();
+        var douqi = __instance.GetDouQi();
+
+        __instance.SetDouQi(level * 100);
 
         //获取法术实例
         var skillComp = ActorSkillManager.GetComponent(__instance);
@@ -131,8 +134,6 @@ public class Patches
                 //增加好的特质
                 if (!__instance.hasTrait("immune") && level > 9) __instance.addTrait("immune");
 
-
-
                 if (level >= Cultisys.MaxLevel) break;
             }
             else
@@ -140,14 +141,6 @@ public class Patches
                 break;
             }
         }
-
-        //获得法术
-        if (skillComp != null && skillComp.known_spells.Count <= 0)
-        {
-            skillComp.LearnSpell("minor_heal");
-        }
-
-
 
         // 每年更新一次功法推演
         __instance.UpdateGongFaDeduction();
@@ -187,9 +180,10 @@ public class Patches
         sb.AppendLine($"推演进度：{__instance.actor.GetGongFaData().deduction_progress * 100:F1}% / {__instance.actor.GetGongFaData().max_deduction * 100:F1}%");
         sb.AppendLine($"修炼速度加成：{__instance.actor.GetGongFaData().cultivation_speed_mod * 100:F1}%");
         sb.AppendLine($"{Main.asset_id_prefix}.skill".Localize());
-        foreach (var item in ActorSkillManager.GetComponent(__instance.actor).known_spells)
+        foreach (var item in __instance.actor.GetKnownSpells())
         {
-            sb.AppendLine($"{Main.asset_id_prefix}.{item.id}".Localize());
+            var asset = item.GetAsset();
+            sb.AppendLine($"  {item.quality} {item.grade}品 "+$"{Main.asset_id_prefix}.{asset.id}".Localize()+$"({item.proficiency}/{item.max_proficiency})");
         }
         info_text.text = sb.ToString();
     }
@@ -252,18 +246,21 @@ public class Patches
 
         if (knownSpells.Count > 0)
         {
-            var availableSpells = new List<(SkillAsset spell, Actor target)>();
+            var availableSpells = new List<(LearnedSkill learnedSkill, Actor target)>();
             var skillComp = ActorSkillManager.GetComponent(__instance);
 
-            foreach (var spell in knownSpells)
+            foreach (var learnedSkill in knownSpells)
             {
+                var spellAsset = learnedSkill.GetAsset();
+                if (spellAsset == null) continue;
+
                 // 检查技能自带的使用条件
-                if (spell.condition != null && spell.condition(__instance, out Actor potentialTarget))
+                if (spellAsset.condition != null && spellAsset.condition(__instance, out Actor potentialTarget))
                 {
-                    // 再检查蓝量和冷却
-                    if (skillComp.CanCastSpell(spell, potentialTarget))
+                    // 再检查蓝量和冷却 (现在传入LearnedSkill实例)
+                    if (skillComp.CanCastSpell(learnedSkill, potentialTarget))
                     {
-                        availableSpells.Add((spell, potentialTarget));
+                        availableSpells.Add((learnedSkill, potentialTarget));
                     }
                 }
             }
@@ -271,11 +268,10 @@ public class Patches
             // 如果有可用的技能, 随机选择一个并施放
             if (availableSpells.Count > 0)
             {
-                // 从可用技能中随机选择一个
-                var (spellToCast, target) = availableSpells[Randy.randomInt(0, availableSpells.Count)];
+                var (skillToCast, target) = availableSpells[Randy.randomInt(0, availableSpells.Count)];
 
-                // 使用工具类来尝试施法，代码更简洁、意图更明确
-                __instance.TryCastSpell(spellToCast.id, target);
+                // 使用工具类来尝试施法，其内部逻辑已更新
+                __instance.TryCastSpell(skillToCast.id, target);
             }
         }
         #endregion

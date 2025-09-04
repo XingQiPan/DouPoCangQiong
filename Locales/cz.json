@@ -32,9 +32,11 @@
   "xingqipan_custommodt001_ui_talent": "天赋",
   "xingqipan_custommodt001_ui_wuxing": "悟性",
   "xingqipan_custommodt001_ui_cultiprogress": "修炼进度",
+  "xingqipan_custommodt001_ui_douqi": "斗气",
   "xingqipan_custommodt001_all_level": "境界人数",
   "xingqipan_custommodt001_UI_WindowCultiStats": "境界人数",
   "xingqipan.custommodt001.UI.WindowCultiStats Title": "斗破修炼境界人数",
   "xingqipan.custommodt001.minor_heal": "治疗术",
+  "xingqipan.custommodt001.fire_dart": "斗气释放",
   "xingqipan.custommodt001.skill": "斗技："
 }

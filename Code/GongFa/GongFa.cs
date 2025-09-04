@@ -38,6 +38,42 @@ namespace DdouPoCangPong.Code.GongFa
             public float deduction_progress = 0;
             public float max_deduction = 250; // 推演所需总经验
 
+            // 新增：功法解锁的斗技ID列表
+            public List<string> granted_skill_ids = new List<string>();
+
+            /// <summary>
+            /// 新增：根据功法等阶，获取可容纳的最大斗技数量
+            /// </summary>
+            public int GetMaxSkillsCapacity()
+            {
+                switch (rank)
+                {
+                    case GongFaRank.黄阶: return 1;
+                    case GongFaRank.玄阶: return 2;
+                    case GongFaRank.地阶: return 3;
+                    case GongFaRank.天阶: return 4;
+                    case GongFaRank.超阶: return 5;
+                    default: return 0;
+                }
+            }
+
+            /// <summary>
+            /// 新增：获取当前功法等阶的突破概率
+            /// </summary>
+            public float GetBreakthroughChance()
+            {
+                switch (rank)
+                {
+                    case GongFaRank.黄阶: return 0.5f; // 50%
+                    case GongFaRank.玄阶: return 0.4f; // 40%
+                    case GongFaRank.地阶: return 0.3f; // 30%
+                    case GongFaRank.天阶: return 0.2f; // 20%
+                    case GongFaRank.超阶: return 0.1f; // 10%
+                    default: return 0.0f;
+                }
+            }
+
+
             private int _initialWuxingBonus = -1; // 私有字段，用于存储初始随机悟性
 
             public GongFaData(string pName, bool isNewFamilyGongFa = false)

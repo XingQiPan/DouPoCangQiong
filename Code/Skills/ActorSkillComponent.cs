@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace DdouPoCangPong.Code.Skills
 {
     internal class ActorSkillComponent
     {
         private Actor owner;
-        public List<SkillAsset> known_spells = new List<SkillAsset>();
+        public List<LearnedSkill> known_spells = new List<LearnedSkill>();
         private Dictionary<string, float> spell_cooldowns = new Dictionary<string, float>();
 
         public ActorSkillComponent(Actor pOwner)
@@ -17,17 +18,25 @@ namespace DdouPoCangPong.Code.Skills
             this.owner = pOwner;
         }
 
-        // 给 Actor 添加一个技能
-        public void LearnSpell(string pSpellID)
+        /// <summary>
+        /// 学习技能时，创建 LearnedSkill 实例
+        /// </summary>
+        /// <param name="pSpellID"></param>
+        /// <param name="quality"></param>
+        public void LearnSpell(string pSpellID, GongFa.GongFa.GongFaRank quality)
         {
-            SkillAsset spell = SkillsLibrary.get(pSpellID);
-            if (spell != null && !known_spells.Any(s => s.id == pSpellID))
+            SkillAsset spellAsset = SkillsLibrary.get(pSpellID);
+            if (spellAsset != null && !known_spells.Any(s => s.id == pSpellID))
             {
-                known_spells.Add(spell);
+                var newLearnedSkill = new LearnedSkill(pSpellID, quality);
+                known_spells.Add(newLearnedSkill);
             }
         }
 
-        // 新增：让 Actor 忘记一个技能
+        /// <summary>
+        /// 忘记技能
+        /// </summary>
+        /// <param name="pSpellID"></param>
         public void ForgetSpell(string pSpellID)
         {
             var spellToRemove = known_spells.FirstOrDefault(s => s.id == pSpellID);
@@ -37,7 +46,10 @@ namespace DdouPoCangPong.Code.Skills
             }
         }
 
-        // 更新冷却时间 (每帧调用)
+        /// <summary>
+        /// 更新冷却时间
+        /// </summary>
+        /// <param name="pElapsed"></param>
         public void Update(float pElapsed)
         {
             if (spell_cooldowns.Count == 0) return;
@@ -67,25 +79,45 @@ namespace DdouPoCangPong.Code.Skills
             return 0f;
         }
 
-        // 检查一个技能是否可以使用
-        public bool CanCastSpell(SkillAsset pSpell, Actor pTarget)
+        /// <summary>
+        /// 检查一个技能是否可以使用
+        /// </summary>
+        /// <param name="pLearnedSkill"></param>
+        /// <param name="pTarget"></param>
+        /// <returns></returns>
+        public bool CanCastSpell(LearnedSkill pLearnedSkill, Actor pTarget)
         {
-            if (pSpell == null) return false;
-            if (IsOnCooldown(pSpell.id)) return false;
-            if (owner.getMana() < pSpell.mana_cost) return false;
+            if (pLearnedSkill == null) return false;
+            var spellAsset = pLearnedSkill.GetAsset();
+            if (spellAsset == null) return false;
+
+            if (IsOnCooldown(spellAsset.id)) return false;
+            if (owner.getHealth() < spellAsset.mana_cost) return false;
             return true;
         }
 
-        // 施放技能
-        public void CastSpell(SkillAsset pSpell, Actor pTarget)
+        /// <summary>
+        /// 施放技能，并增加熟练度
+        /// </summary>
+        /// <param name="pLearnedSkill"></param>
+        /// <param name="pTarget"></param>
+        public bool CastSpell(LearnedSkill pLearnedSkill, Actor pTarget)
         {
-            if (!CanCastSpell(pSpell, pTarget)) return;
+            Debug.Log("释放法术");
+            if (!CanCastSpell(pLearnedSkill, pTarget)) return false;
 
-            owner.spendMana(pSpell.mana_cost);
-            spell_cooldowns[pSpell.id] = pSpell.cooldown;
-            pSpell.action(owner, pTarget);
+            var spellAsset = pLearnedSkill.GetAsset();
+
+            owner.spendMana(spellAsset.mana_cost);
+            spell_cooldowns[spellAsset.id] = spellAsset.cooldown;
+            spellAsset.action(owner, pTarget);
+
+            // 新增：每次成功施法，增加熟练度
+            pLearnedSkill.AddProficiency(Randy.randomInt(10, 25));
 
             owner.doCastAnimation();
+
+            return true;
         }
     }
 }

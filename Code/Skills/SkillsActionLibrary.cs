@@ -29,11 +29,13 @@ namespace DdouPoCangPong.Code.Skills
             // 检查目标是否存在且是敌人
             if (pTarget == null || !pCaster.areFoes(pTarget)) return;
 
-            // 生成一个火球投掷物
+            EffectsLibrary.spawnAt("douqi_burst_effect", pTarget.current_position, pTarget.actor_scale);
+
+            // 生成一个投掷物
             World.world.projectiles.spawn(
                 pCaster,                   // 投掷者
                 pTarget,                   // 目标
-                "fireball",                // 使用游戏自带的火球预设
+                "douqi_burst_effect",      // << 修改这里：使用你的自定义特效ID替换 "fireball"
                 pCaster.getThrowStartPosition(), // 起始位置
                 pTarget.current_position,  // 目标位置
                 0f,                        // 角度偏移
