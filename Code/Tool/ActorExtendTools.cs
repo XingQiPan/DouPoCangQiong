@@ -120,7 +120,7 @@ namespace DdouPoCangPong.Code.Tool
         {
             actor.data.get(wu_xing_key, out int wuxing, -1);
             if (wuxing > 0) return wuxing;
-            wuxing = Randy.randomInt(1,100);
+            wuxing = (int)(actor.intelligence * 2 + actor.age * 0.15f);
             actor.SetWuXing(wuxing);
             return wuxing;
         }

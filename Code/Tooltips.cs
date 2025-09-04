@@ -46,7 +46,7 @@ namespace DdouPoCangPong.Code
             Actor actor = data.actor;
 
             var level = actor.GetCultisysLevel();
-            tooltip.name.text = LevelTool.GetFormattedLevel(level);
+            tooltip.name.text = LevelTool.GetFormattedLevel(level+1);
             tooltip.setDescription($"{Main.asset_id_prefix}.ui.cultiprogress".Localize() + $": {actor.GetExp():N0}/{Cultisys.LevelExpRequired[level]:N0}");
             tooltip.addLineIntText($"{Main.asset_id_prefix}.ui.talent", (int)actor.GetTalent());
             tooltip.addLineIntText($"{Main.asset_id_prefix}.ui.wuxing", (int)actor.GetWuXing());

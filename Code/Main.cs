@@ -32,7 +32,7 @@ namespace DdouPoCangPong
             }
             catch (Exception e)
             {
-                Debug.Log(e);
+                Debug.Log("斗气机制加载失败："+e);
             }
 
             // 创建空白窗口

@@ -56,10 +56,22 @@ public class Patches
     [HarmonyPatch(typeof(Actor), nameof(Actor.updateAge))]
     public static void Actor_updateAge_postfix(Actor __instance)
     {
+        // 确保角色是活着的并且有功法数据
+        if (!__instance.isAlive() || __instance.GetGongFaDataInternal() == null)
+        {
+            return;
+        }
+
+        // 每10年更新一次悟性
+        if (__instance.getAge() % 10 == 0)
+        {
+            __instance.CalculateWuxing();
+        }
+
         var level = __instance.GetCultisysLevel();
         if (level > __instance.GetCultisysLevel()) return;
         var talent = __instance.GetTalent();
-        var mod_talent = __instance.GetModTalent() + __instance.GetGongFaData().mod_talent;
+        var mod_talent = __instance.GetModTalent() + __instance.GetGongFaData().cultivation_speed_mod;
         var wu_xing = __instance.GetWuXing();
         var gongfa = __instance.GetGongFaData();
 
@@ -67,16 +79,13 @@ public class Patches
             __instance.IncExp(50 + talent * 0.01f * 50 + mod_talent * 50);
         else
             __instance.IncExp(50 + talent * 0.01f * 50);
-        // 【核心修改】当经验满足时，进行突破尝试
         while (__instance.GetExp() >= Cultisys.LevelExpRequired[level])
         {
-            // 消耗掉本次突破所需的经验，无论成功与否
             __instance.ResetExp(Cultisys.LevelExpRequired[level]);
 
             // 判断是小境界突破还是大境界突破 (level 8 -> 9级，是冲击大境界)
             bool is_major_breakthrough = (level + 1) % 9 == 0;
 
-            // 【已修正】从 Cultisys 中获取正确的概率
             float success_chance = is_major_breakthrough
                 ? Cultisys.MajorRealmBreakthroughChance[level]  // 大境界用 Major 概率
                 : Cultisys.MinorStarBreakthroughChance[level];  // 小境界用 Minor 概率
@@ -98,17 +107,23 @@ public class Patches
                     ""
                 ).Trim();
 
-                __instance.data.setName(cleanName + "-" + LevelTool.GetFormattedLevel(level));
+                __instance.data.setName(cleanName + "-" + LevelTool.GetFormattedLevel(level+1));
 
-                if(!__instance.hasTrait("fire_proof") && __instance.GetCultisysLevel() > 44)
+                if(!__instance.hasTrait("fire_proof") && __instance.GetCultisysLevel() > 36)
                 {
                     __instance.addTrait("fire_proof");
                 }
               
+                //去掉不好的体质
                 if (__instance.hasTrait("crippled")) __instance.removeTrait("crippled");
                 if (__instance.hasTrait("fragile_health")) __instance.removeTrait("fragile_health");
                 if (__instance.hasTrait("weak")) __instance.removeTrait("weak");
                 if (__instance.hasTrait("fat")) __instance.removeTrait("fat");
+
+                //增加好的特质
+                if (!__instance.hasTrait("immune") && level > 9) __instance.addTrait("immune");
+
+
 
                 if (level >= Cultisys.MaxLevel) break;
             }
@@ -118,11 +133,12 @@ public class Patches
             }
         }
 
-        //修炼功法
-        if(!__instance.AddGongFaExp(wu_xing)|| gongfa.ceng >= 10)
-        {
-            __instance.DeduceGongFaRank(0.1f);
-        }
+
+
+
+        // 每年更新一次功法推演
+        __instance.UpdateGongFaDeduction();
+        __instance.AddGongFaExp((int)(wu_xing * 1.6 + level * 1.4 + Randy.randomInt(0, 50)));
     }
 
     [Hotfixable]
@@ -155,8 +171,8 @@ public class Patches
         sb.AppendLine($"功法:{__instance.actor.GetGongFaData().name} {__instance.actor.GetGongFaData().rank} {__instance.actor.GetGongFaData().grade}品");
         sb.AppendLine($"功法层数：{__instance.actor.GetGongFaData().ceng} / {__instance.actor.GetGongFaData().maxceng}");
         sb.AppendLine($"功法进度：{__instance.actor.GetGongFaData().exp}/{__instance.actor.GetGongFaData().max_exp}");
-        sb.AppendLine($"推演进度：{__instance.actor.GetGongFaData().deduction * 100:F1}% / {__instance.actor.GetGongFaData().max_deduction * 100:F1}%");
-        sb.AppendLine($"修炼速度加成：{__instance.actor.GetGongFaData().mod_talent * 100:F1}%");
+        sb.AppendLine($"推演进度：{__instance.actor.GetGongFaData().deduction_progress * 100:F1}% / {__instance.actor.GetGongFaData().max_deduction * 100:F1}%");
+        sb.AppendLine($"修炼速度加成：{__instance.actor.GetGongFaData().cultivation_speed_mod * 100:F1}%");
 
         info_text.text = sb.ToString();
     }
@@ -183,8 +199,13 @@ public class Patches
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Actor), nameof(Actor.getHit))]
-    private static void Actor_getHit_postfix(Actor __instance, BaseSimObject pAttacker = null)
+    private static void Actor_getHit_postfix(Actor __instance, ref float pDamage, BaseSimObject pAttacker = null)
     {
+        if (pAttacker == null || !(pAttacker is Actor attackerActor1) || attackerActor1 == __instance)
+        {
+            return;
+        }
+
         if (!__instance.hasHealth())
         {
             if (pAttacker is Actor attackerActor)
@@ -202,18 +223,58 @@ public class Patches
                 attackerActor.IncExp(experienceToAward);
             }
         }
+
+        // 获取防御方和攻击方的等级
+        int defenderLevel = __instance.GetCultisysLevel();
+        Actor attack = (Actor)pAttacker;
+        int attackerLevel = attack.GetCultisysLevel();
+
+        if (defenderLevel > 90 && attackerLevel <= 90)
+        {
+            // 将伤害减少90% (即只承受10%的伤害)
+            pDamage *= 0.1f;
+            pDamage = Mathf.Max(1f, pDamage);
+        }
     }
 
     /// <summary>
-    /// 创建功法
+    /// 防击退 (最终修正版)
     /// </summary>
-    /// <param name="__instance"></param>
-    /// <param name="pActor1"></param>
-    /// <param name="pActor2"></param>
-    [HarmonyPatch(typeof(Family), nameof(Family.newFamily))]
-    public static void Family_book_postfix(Family __instance, Actor pActor1, Actor pActor2)
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.addForce), new Type[] { typeof(float), typeof(float), typeof(float), typeof(bool) })]
+    public static bool addForce_Prefix(Actor __instance)
     {
-        GongFaData actor1GongFa = pActor1.GetGongFaData();
+        if (__instance.GetCultisysLevel() > 64)
+        {
+            return false; // 拦截原始函数
+        }
+        return true; // 放行原始函数
+    }
+
+    /// <summary>
+    /// 防眩晕 (最终修正版)
+    /// </summary>
+    [HarmonyPrefix]
+    [HarmonyPatch(typeof(Actor))]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.makeStunned), new Type[] { typeof(float) })]
+    public static bool makeStunned_Prefix(Actor __instance)
+    {
+        if (__instance.GetCultisysLevel() > 81)
+        {
+            return false; // 拦截原始函数
+        }
+        return true; // 放行原始函数
+    }
+
+    /// <summary>
+    /// 在创建新生物时触发，使其自动继承或创建功法。
+    /// </summary>
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(Actor), nameof(Actor.newCreature))]
+    public static void Actor_newCreature_Postfix(Actor __instance)
+    {
+        // 调用GetGongFaData会触发我们的创建/继承逻辑
+        __instance.GetGongFaData();
     }
 
 }
